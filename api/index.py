@@ -1,35 +1,8 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
-import httpx
 import json
+import httpx
 import urllib.parse
+from typing import Dict, Any, Optional
 
-app = FastAPI()
-
-# 配置CORS，允许所有来源访问
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 请求模型
-class FansQueryRequest(BaseModel):
-    account_name: str
-    token: str
-    cookie: str
-    fingerprint: str
-
-# 响应模型
-class FansQueryResponse(BaseModel):
-    data: Dict[str, Any]
-    msg: str
-
-# 微信公众号查询服务
 class WeChatFansService:
     def __init__(self):
         self.base_url = "https://mp.weixin.qq.com"
@@ -132,39 +105,30 @@ class WeChatFansService:
 # 创建服务实例
 fans_service = WeChatFansService()
 
-@app.get("/")
-async def root():
-    return {"data": "HelloWord", "msg": "success"}
-
-@app.get("/api")
-async def api_endpoint():
-    return {"data": "HelloWord", "msg": "success"}
-
-@app.post("/api/fans-query", response_model=FansQueryResponse)
-async def query_fans(request: FansQueryRequest):
+async def query_fans_data(account_name: str, token: str, cookie: str, fingerprint: str) -> Dict[str, Any]:
     """查询公众号粉丝数"""
     try:
         # 第一次请求：搜索公众号
         account_info = await fans_service.search_account(
-            request.account_name, 
-            request.token, 
-            request.cookie, 
-            request.fingerprint
+            account_name, 
+            token, 
+            cookie, 
+            fingerprint
         )
         
         if not account_info:
-            return FansQueryResponse(
-                data={},
-                msg="未找到匹配的公众号"
-            )
+            return {
+                "data": {},
+                "msg": "未找到匹配的公众号"
+            }
         
         # 第二次请求：获取粉丝数
         fakeid = account_info.get('fakeid', '')
         fans_count = await fans_service.get_fans_count(
             fakeid,
-            request.token,
-            request.cookie,
-            request.fingerprint
+            token,
+            cookie,
+            fingerprint
         )
         
         # 构建返回数据
@@ -177,17 +141,109 @@ async def query_fans(request: FansQueryRequest):
             "fakeid": fakeid
         }
         
-        return FansQueryResponse(
-            data=result_data,
-            msg="success"
-        )
+        return {
+            "data": result_data,
+            "msg": "success"
+        }
         
     except Exception as e:
         print(f"查询粉丝数时出错: {str(e)}")
-        return FansQueryResponse(
-            data={},
-            msg=f"查询失败: {str(e)}"
-        )
+        return {
+            "data": {},
+            "msg": f"查询失败: {str(e)}"
+        }
 
 # Vercel serverless function handler
-handler = app
+def handler(request):
+    """
+    Vercel serverless function handler
+    """
+    import asyncio
+    
+    # 设置CORS头
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
+    }
+    
+    # 处理OPTIONS请求（CORS预检）
+    if request.method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': ''
+        }
+    
+    # 处理GET请求
+    if request.method == 'GET':
+        if request.path == '/' or request.path == '/api':
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({"data": "HelloWord", "msg": "success"}, ensure_ascii=False)
+            }
+        else:
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({"error": "Not found"}, ensure_ascii=False)
+            }
+    
+    # 处理POST请求
+    if request.method == 'POST' and request.path == '/api/fans-query':
+        try:
+            # 解析请求体
+            body = request.body
+            if isinstance(body, bytes):
+                body = body.decode('utf-8')
+            
+            data = json.loads(body) if body else {}
+            
+            # 验证必需字段
+            required_fields = ['account_name', 'token', 'cookie', 'fingerprint']
+            for field in required_fields:
+                if field not in data:
+                    return {
+                        'statusCode': 400,
+                        'headers': headers,
+                        'body': json.dumps({
+                            "data": {},
+                            "msg": f"缺少必需字段: {field}"
+                        }, ensure_ascii=False)
+                    }
+            
+            # 异步查询数据
+            result = asyncio.run(query_fans_data(
+                data['account_name'],
+                data['token'],
+                data['cookie'],
+                data['fingerprint']
+            ))
+            
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps(result, ensure_ascii=False)
+            }
+            
+        except Exception as e:
+            return {
+                'statusCode': 500,
+                'headers': headers,
+                'body': json.dumps({
+                    "data": {},
+                    "msg": f"服务器错误: {str(e)}"
+                }, ensure_ascii=False)
+            }
+    
+    # 其他请求返回404
+    return {
+        'statusCode': 404,
+        'headers': headers,
+        'body': json.dumps({"error": "Not found"}, ensure_ascii=False)
+    }
+
+# 导出handler供Vercel使用
+__all__ = ['handler']
