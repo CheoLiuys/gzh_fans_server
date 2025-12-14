@@ -1,6 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -8,11 +10,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 健康检查端点
+// 根目录端点 - 返回 index.html
 app.get('/', (req, res) => {
-  res.json({
-    data: "Server is running",
-    msg: "success"
+  const indexPath = path.join(__dirname, '..', 'index.html');
+  
+  fs.readFile(indexPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('读取 index.html 文件失败:', err);
+      return res.status(500).json({
+        data: {},
+        msg: "服务器内部错误"
+      });
+    }
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(data);
   });
 });
 
