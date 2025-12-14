@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return jsonify({"data": "HelloWord", "msg": "success"})
+    return jsonify({"data": "Server is running", "msg": "success"})
 
 @app.route('/api/fans-query', methods=['POST'])
 def fans_query():
