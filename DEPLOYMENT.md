@@ -2,7 +2,7 @@
 
 ## 项目已准备就绪
 
-您的微信公众号粉丝查询 API 项目已经配置完成，可以部署到 Vercel。
+您的微信公众号粉丝查询 API 项目已经重构为 Node.js 并配置完成，可以部署到 Vercel。
 
 ## 部署步骤
 
@@ -31,12 +31,12 @@ vercel
 2. 登录您的账户
 3. 点击 "New Project"
 4. 导入您的 GitHub 仓库：`https://github.com/CheoLiuys/gzh_fans_server.git`
-5. Vercel 会自动检测到 Python 项目并使用以下配置：
-   - **Framework Preset**: Python
+5. Vercel 会自动检测到 Node.js 项目并使用以下配置：
+   - **Framework Preset**: Other
    - **Root Directory**: ./
    - **Build Command**: (空)
    - **Output Directory**: (空)
-   - **Install Command**: `pip install -r requirements.txt`
+   - **Install Command**: `npm install`
 
 6. 点击 "Deploy"
 
@@ -45,8 +45,8 @@ vercel
 ```
 gzh_fans/
 ├── api/
-│   └── index.py          # Flask API 应用
-├── requirements.txt       # Python 依赖
+│   └── index.js          # Express API 应用
+├── package.json           # Node.js 依赖和脚本
 ├── vercel.json           # Vercel 配置文件
 ├── README.md             # 项目说明
 └── DEPLOYMENT.md         # 部署指南
@@ -97,9 +97,9 @@ curl -X POST https://your-app.vercel.app/api/fans-query \
 
 如果部署失败，请检查：
 
-1. `requirements.txt` 文件是否正确
+1. `package.json` 文件是否正确
 2. `vercel.json` 配置是否正确
 3. API 代码是否有语法错误
 4. 依赖包版本是否兼容
 
-更多帮助请参考 [Vercel Python 文档](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python)。
+更多帮助请参考 [Vercel Node.js 文档](https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/node)。

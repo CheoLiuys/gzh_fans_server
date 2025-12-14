@@ -1,6 +1,6 @@
 # 微信公众号粉丝查询API
 
-基于Flask的微信公众号粉丝数查询服务，部署在Vercel上。
+基于Node.js Express的微信公众号粉丝数查询服务，部署在Vercel上。
 
 ## API端点
 
@@ -41,9 +41,17 @@ POST /api/fans-query
 
 ## 部署
 
-项目已配置为在Vercel上自动部署。
+项目已配置为在Vercel上自动部署。详细部署说明请查看 [DEPLOYMENT.md](./DEPLOYMENT.md)。
+
+## 技术栈
+
+- **Node.js** - 运行时环境
+- **Express** - Web 框架
+- **Axios** - HTTP 客户端
+- **CORS** - 跨域支持
 
 ## 依赖
 
-- Flask==2.3.3
-- requests==2.31.0
+- express@^4.18.2
+- axios@^1.6.0
+- cors@^2.8.5
