@@ -160,22 +160,22 @@ async function getFansCount(fakeid, token, cookie, fingerprint) {
       return null;
     }
     
-    // 查找 publish_type 为 101 的条目，这包含粉丝数信息
-    let fansCount = 0;
+    // 检索所有条目，获取粉丝数的最大值
+    let maxFansCount = 0;
     for (const publish of publishList) {
-      if (publish.publish_type === 101) {
-        const publishInfoStr = publish.publish_info || '{}';
-        const publishInfo = JSON.parse(publishInfoStr);
-        
-        const sentStatus = publishInfo.sent_status || {};
-        fansCount = sentStatus.total || 0;
-        
-        // 找到粉丝数后立即退出循环
-        break;
+      const publishInfoStr = publish.publish_info || '{}';
+      const publishInfo = JSON.parse(publishInfoStr);
+      
+      const sentStatus = publishInfo.sent_status || {};
+      const currentFansCount = sentStatus.total || 0;
+      
+      // 更新最大值
+      if (currentFansCount > maxFansCount) {
+        maxFansCount = currentFansCount;
       }
     }
     
-    return fansCount;
+    return maxFansCount;
     
   } catch (error) {
     console.error('获取粉丝数时出错:', error.message);
