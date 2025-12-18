@@ -160,12 +160,20 @@ async function getFansCount(fakeid, token, cookie, fingerprint) {
       return null;
     }
     
-    const firstPublish = publishList[0];
-    const publishInfoStr = firstPublish.publish_info || '{}';
-    const publishInfo = JSON.parse(publishInfoStr);
-    
-    const sentStatus = publishInfo.sent_status || {};
-    const fansCount = sentStatus.total || 0;
+    // 查找 publish_type 为 101 的条目，这包含粉丝数信息
+    let fansCount = 0;
+    for (const publish of publishList) {
+      if (publish.publish_type === 101) {
+        const publishInfoStr = publish.publish_info || '{}';
+        const publishInfo = JSON.parse(publishInfoStr);
+        
+        const sentStatus = publishInfo.sent_status || {};
+        fansCount = sentStatus.total || 0;
+        
+        // 找到粉丝数后立即退出循环
+        break;
+      }
+    }
     
     return fansCount;
     
