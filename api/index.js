@@ -401,15 +401,38 @@ async function searchAccount(accountName, token, cookie, fingerprint) {
     const response = await axios.get(url, { headers, timeout: 30000 });
     const data = response.data;
     
+    console.log('搜索公众号:', accountName);
+    console.log('API 返回数据:', JSON.stringify(data, null, 2));
+    
     if (data.base_resp && data.base_resp.ret !== 0) {
+      console.error('API 返回错误:', data.base_resp);
       return null;
     }
     
     const accountList = data.list || [];
     if (accountList.length === 0) {
+      console.error('搜索结果为空');
       return null;
     }
     
+    console.log(`找到 ${accountList.length} 个搜索结果`);
+    
+    // 遍历搜索结果，查找精确匹配的公众号名称
+    for (let i = 0; i < accountList.length; i++) {
+      const account = accountList[i];
+      const nickname = account.nickname || '';
+      
+      console.log(`结果 ${i + 1}: ${nickname}`);
+      
+      // 精确匹配公众号名称
+      if (nickname === accountName) {
+        console.log(`✅ 找到匹配的公众号: ${nickname}`);
+        return account;
+      }
+    }
+    
+    // 如果没有精确匹配，返回第一个结果
+    console.log(`⚠️  未找到精确匹配，返回第一个结果: ${accountList[0].nickname}`);
     return accountList[0];
     
   } catch (error) {
