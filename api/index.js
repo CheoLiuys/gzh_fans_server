@@ -464,7 +464,20 @@ async function getFansCount(fakeid, token, cookie, fingerprint) {
     console.log('📊 获取粉丝数 - API 返回数据:', JSON.stringify(data, null, 2));
     
     if (data.base_resp && data.base_resp.ret !== 0) {
+      const errorMsg = data.base_resp.err_msg || '未知错误';
+      const retCode = data.base_resp.ret;
+      
       console.error('❌ API 返回错误:', data.base_resp);
+      
+      // 特殊错误处理
+      if (retCode === 200040 || errorMsg === 'invalid csrf token') {
+        console.error('🔒 CSRF Token 失效，需要更新 Cookie');
+        throw new Error(`CSRF Token 失效 (错误码: ${retCode})，请更新 Cookie`);
+      } else if (retCode === 200006 || errorMsg.includes('cookie')) {
+        console.error('🍪 Cookie 无效或已过期');
+        throw new Error(`Cookie 无效 (错误码: ${retCode})，请更新 Cookie`);
+      }
+      
       return null;
     }
     
