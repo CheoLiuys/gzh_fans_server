@@ -461,26 +461,42 @@ async function getFansCount(fakeid, token, cookie, fingerprint) {
     const response = await axios.get(url, { headers, timeout: 30000 });
     const data = response.data;
     
+    console.log('📊 获取粉丝数 - API 返回数据:', JSON.stringify(data, null, 2));
+    
     if (data.base_resp && data.base_resp.ret !== 0) {
+      console.error('❌ API 返回错误:', data.base_resp);
       return null;
     }
     
     const publishPageStr = data.publish_page || '{}';
+    console.log('📄 publish_page 字符串长度:', publishPageStr.length);
+    
     const publishPage = JSON.parse(publishPageStr);
+    console.log('✅ 解析 publish_page 成功:', Object.keys(publishPage));
     
     const publishList = publishPage.publish_list || [];
+    console.log(`📋 找到 ${publishList.length} 个发布记录`);
+    
     if (publishList.length === 0) {
+      console.error('❌ 发布记录列表为空');
       return null;
     }
     
     // 检索所有条目，获取粉丝数的最大值
     let maxFansCount = 0;
-    for (const publish of publishList) {
+    for (let i = 0; i < publishList.length; i++) {
+      const publish = publishList[i];
       const publishInfoStr = publish.publish_info || '{}';
+      
+      console.log(`\n📝 处理记录 ${i + 1}/${publishList.length}`);
+      console.log('   publish_info 长度:', publishInfoStr.length);
+      
       const publishInfo = JSON.parse(publishInfoStr);
       
       const sentStatus = publishInfo.sent_status || {};
       const currentFansCount = sentStatus.total || 0;
+      
+      console.log(`   粉丝数: ${currentFansCount}`);
       
       // 更新最大值
       if (currentFansCount > maxFansCount) {
@@ -488,10 +504,12 @@ async function getFansCount(fakeid, token, cookie, fingerprint) {
       }
     }
     
+    console.log(`\n🎯 最大粉丝数: ${maxFansCount}`);
     return maxFansCount;
     
   } catch (error) {
-    console.error('获取粉丝数时出错:', error.message);
+    console.error('❌ 获取粉丝数时出错:', error.message);
+    console.error('错误堆栈:', error.stack);
     return null;
   }
 }
